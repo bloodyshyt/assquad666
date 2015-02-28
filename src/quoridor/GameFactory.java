@@ -6,11 +6,14 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.Scanner;
 
 import quoridor.Command.CommandType;
-
 import util.Two;
 
 /**
@@ -36,6 +39,8 @@ import util.Two;
  */
 
 public class GameFactory {
+	
+	static Random random;
 
 	/**
 	 * Main Function of the program. It's where it all start.
@@ -44,12 +49,124 @@ public class GameFactory {
 	public static void main(String[] args){
 
 		System.out.println("Welcome to Quoridor AssQuad666 !");
-		run2();
+		random =  new Random();
+		random.setSeed(System.currentTimeMillis());
+		run3();
 //		while(true){
 //			run2();
 //		}
 	}
+	
+	private static float randomFloat(float range) {
+		return (float) (Math.random() * (2 * range) - range);
+	}
 
+	public static void run3() {
+		
+		// create our population
+		int popSize = 5;
+		float hasFeature = 0.8f;
+		float range = 3.0f;
+		Subject[] pop;
+		pop  = createPopulation(popSize, hasFeature, range);
+		
+		// print out initial weights
+		for(Subject s : pop) {
+			System.out.println(s.weights[0] + " " + s.weights[1] + " "  + s.weights[2] + " "  + s.weights[3] );
+		}
+		
+		// go one generation
+		pop = runOneGeneration(pop);
+		pop = spawn(pop);
+		for(Subject s : pop) {
+			System.out.println(s.weights[0] + " " + s.weights[1] + " "  + s.weights[2] + " "  + s.weights[3] );
+		}
+	}
+	
+	private static Subject[] runOneGeneration(Subject[] pop) {
+		for(Subject s : pop) s.fitnessFunction = 0;
+		for(int i = 0; i < pop.length; i++) {
+			for(int j = 0; j < pop.length; j++) {
+				if(i == j) continue;
+				if(playGame(pop[i], pop[j]) == 1) {
+					pop[i].fitnessFunction++;
+				} else
+					pop[j].fitnessFunction++;
+			}
+		}
+		return pop;
+	}
+	
+	private static Subject[] spawn(Subject[] pop) {
+		Subject[] nPop = new Subject[pop.length];
+		Arrays.sort(pop, Collections.reverseOrder());
+		nPop[0] = pop[0].clone();
+		nPop[1] = reproduce(pop[1], pop[2], 0.2f, 0.2f, 0.5f, 3f);
+		nPop[2] = reproduce(pop[1], pop[2], 0.2f, 0.2f, 0.5f, 3f);
+		nPop[3] = reproduce(pop[1], pop[2], 0.2f, 0.2f, 0.5f, 3f);
+		nPop[4] = reproduce(pop[3], pop[4], 0.2f, 0.2f, 0.5f, 3f);
+		return nPop;
+	}
+	
+	private static Subject reproduce(Subject s1, Subject s2, float mutation, float loseFeature, float featMutate, float featRange) {
+		float[] m = s1.weights;
+		float[] f = s2.weights;
+		float[] c = new float[s1.weights.length];
+		
+		for(int i = 0; i < c.length; i++) {
+			if(random.nextFloat() > 0.5) 
+				c[i] = m[i];
+			else 
+				c[i] = f[i];
+			if(c[i] == 0) {
+				if(random.nextFloat() < mutation)
+					c[i] = randomFloat(featRange);
+			} else {
+				if(random.nextFloat() < loseFeature) 
+					c[i] = 0;
+				else {
+					c[i] += randomFloat(featMutate);
+				}
+			}
+		}
+		return new Subject(c);
+	}
+
+	private static Subject[] createPopulation(int popSize, float hasFeature, float range) {
+		Subject[] pop = new Subject[popSize];
+		// currently 4 features
+		Random random = new Random();
+		random.setSeed(System.currentTimeMillis());
+		for(int j = 0; j < popSize; j++) {
+			float[] weights = new float[4];
+			for(int i = 0; i < 4; i++) {
+				if(random.nextFloat() < hasFeature) {
+					weights[i] = (random.nextFloat() * 2 * range) - range;
+				} else {
+					weights[i] = 0.0f;
+				}
+			}
+			pop[j] = new Subject(weights);
+		}
+		
+		return pop;
+	}
+	
+	private static int playGame(Subject subject, Subject subject2) {
+		Two<Player> players = null;
+		Player playerOne;
+		Player playerTwo;
+		playerOne = new AIPlayer("Computer 1", subject.weights);
+		playerTwo = new AIPlayer("Computer 2", subject2.weights);
+		players = Two.two(playerOne, playerTwo);
+		String winner = newGame(players);
+		if (winner.equals("Computer 1")) {
+			return 1;
+		} else if (winner.equals("Computer 2")) {
+			return 2;
+		}
+		return 0;
+	}
 	
 	public static void run2() {
 		Two<Player> players = null;
@@ -62,7 +179,7 @@ public class GameFactory {
 		
 		int[] gamesWon = new int[] {0, 0};
 		
-		for (int i = 0; i < 100; i++) {
+		for (int i = 0; i < 20; i++) {
 			playerOne = new AIPlayer("Computer 1", new float[] { 0.0f, -1f, 1f, 1f });
 			playerTwo = new AIPlayer("Computer 2", new float[] { 0.0f, -1f, 1f, 1f });
 			//playerTwo = new AIPlayer("Computer 2", new float[] { 0.0f, -0.8f, 1f, 1.2f });

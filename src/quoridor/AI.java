@@ -10,8 +10,10 @@ import util.Two;
 import features.Feature;
 import features.MaxPlayerMovesToNextColumn;
 import features.MaxPlayerShortestPath;
+import features.MaxPlayerWalls;
 import features.MinPlayerMovesToNextColumn;
 import features.MinPlayerShortestPath;
+import features.MinPlayerWalls;
 import features.Position;
 import features.PositionDifference;
 import features.WallsDifference;
@@ -34,9 +36,10 @@ public class AI {
 
 	MaxPlayerShortestPath maxPlayerShortestPath = new MaxPlayerShortestPath();
 	MinPlayerShortestPath minPlayerShortestPath = new MinPlayerShortestPath();
-	WallsDifference difference2 = new WallsDifference();
+	MaxPlayerWalls maxPlayerWalls = new MaxPlayerWalls();
+	MinPlayerWalls minPlayerWalls = new MinPlayerWalls();
 	Feature[] features = new Feature[] { null, maxPlayerShortestPath,
-			minPlayerShortestPath, difference2 };
+			minPlayerShortestPath, maxPlayerShortestPath, minPlayerShortestPath};
 	// float[] weights = new float[] { 0.0f, -1f, 1f, 1f };
 	float[] weights;
 
@@ -163,7 +166,7 @@ public class AI {
 	private float evaluate(Game tempGame, Player player, float[] weights) {
 		float score = 0;
 		for (int i = 1; i < features.length; i++) {
-			score += weights[i] * features[i].evaluate(tempGame, player);
+			score += weights[i - 1] * features[i].evaluate(tempGame, player);
 		}
 		return score;
 	}
