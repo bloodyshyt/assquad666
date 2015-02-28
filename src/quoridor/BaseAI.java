@@ -47,10 +47,10 @@ public class BaseAI {
 	 * @param game
 	 *            the game AI is required for.
 	 */
-	public BaseAI(Game game, float[] weights) {
+	public BaseAI(Game game) {
 		this.game = game;
 		player = game.myTurn();
-		this.weights = weights;
+		this.weights = ((AIPlayer) player).weights;
 	}
 
 	/**

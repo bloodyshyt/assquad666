@@ -44,11 +44,40 @@ public class GameFactory {
 	public static void main(String[] args){
 
 		System.out.println("Welcome to Quoridor AssQuad666 !");
-		while(true){
-			run();
-		}
+		run2();
+//		while(true){
+//			run2();
+//		}
 	}
 
+	
+	public static void run2() {
+		Two<Player> players = null;
+		Player playerOne;
+		Player playerTwo;
+		playerOne = new AIPlayer("Computer 1", new float[] { 0.0f, -1f, 1f, 1f });
+		playerTwo = new AIPlayer("Computer 2", new float[] { 0.0f, -1f, 1f, 1f });
+		//playerTwo = new AIPlayer("Computer 2", new float[] { 0.0f, -0.8f, 1f, 1.2f });
+		players = Two.two(playerOne, playerTwo);
+		
+		int[] gamesWon = new int[] {0, 0};
+		
+		for (int i = 0; i < 100; i++) {
+			playerOne = new AIPlayer("Computer 1", new float[] { 0.0f, -1f, 1f, 1f });
+			playerTwo = new AIPlayer("Computer 2", new float[] { 0.0f, -1f, 1f, 1f });
+			//playerTwo = new AIPlayer("Computer 2", new float[] { 0.0f, -0.8f, 1f, 1.2f });
+			players = Two.two(playerOne, playerTwo);
+			String winner = newGame(players);
+			if (winner.equals("Computer 1")) {
+				gamesWon[0]++;
+			} else if (winner.equals("Computer 2")) {
+				gamesWon[1]++;
+			}
+		}
+		
+		System.out.println("Final score: " + "C1:" + gamesWon[0] + " C2:" + gamesWon[1]);
+		
+	}
 
 	/**
 	 * runs the Game Factory by getting input, calling some parsing and calling appropriate functions.
@@ -166,11 +195,11 @@ public class GameFactory {
 	/**
 	 * Creates a new Game. Initializes it.
 	 */
-	public static void newGame(Two<Player> players) {
+	public static String newGame(Two<Player> players) {
 		System.out.println("Making a new game...");
 		Game game = new Game(players);
 		game.initGame(null);
-		game.play();
+		return game.play();
 	}
 
 	/**

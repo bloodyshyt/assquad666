@@ -19,12 +19,17 @@ package quoridor;
  *
  */
 
-public class AIPlayer extends Player{
+public class AIPlayer extends Player {
 
-
+	public float[] weights;
 
 	public AIPlayer(String name){
 		this.name = name;
+	}
+	
+	public AIPlayer(String name, float[] weights){
+		this.name = name;
+		this.weights = weights;
 	}
 
 	@Override
@@ -34,7 +39,8 @@ public class AIPlayer extends Player{
 
 	@Override
 	public String level(){
-		return this.level;
+		return this.name;
+		//return this.level;
 	}
 
 }

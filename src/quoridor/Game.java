@@ -316,10 +316,10 @@ public class Game {
 	 * Plays the Game. With a !isOver() loop. keeps asking for prompts for now
 	 * and displaying. Soon will be AI and stuff.
 	 */
-	public void play() {
+	public String play() {
 
-		display();
-		System.out.println("Make a move " + myTurn().name + ": ");
+		//display();
+		//System.out.println("Make a move " + myTurn().name + ": ");
 		int turns = 0;
 		while (!isOver()) {
 			turns++;
@@ -330,17 +330,17 @@ public class Game {
 			} else {
 				move = getInput();
 				if (move == null)
-					return;
+					return null;
 			}
 
 			if (isValid(move, myTurn())) {
 				move(move, myTurn());
-				display();
-				if (myTurn().type().equals("Human"))
-					System.out.println("Make a move " + myTurn().name + ": ");
-				else
-					System.out.println(myTurn().name + "(" + myTurn().level()
-							+ ")" + " is making a move...");
+				//display();
+//				if (myTurn().type().equals("Human"))
+//					System.out.println("Make a move " + myTurn().name + ": ");
+//				else
+//					System.out.println(myTurn().name + "(" + myTurn().level()
+//							+ ")" + " is making a move...");
 			} else {
 				System.out.println("Invalid move noob, try again: ");
 			}
@@ -348,6 +348,7 @@ public class Game {
 		}
 
 		System.out.println("GG. Winner is " + winner().name + " after " + turns + ".");
+		return winner().name;
 	}
 
 	/**
