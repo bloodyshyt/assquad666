@@ -1,0 +1,5 @@
+Progress Report
+
+Get new heuristic features to work properly DONE!
+Implement new game copy method instead of iterating through all made moves
+abstract the ai 

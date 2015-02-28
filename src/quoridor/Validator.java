@@ -8,11 +8,11 @@ import quoridor.Command.CommandType;
 import util.Two;
 
 /**
- * Validator is in charge of deciding if a move or a serie of moves is valid according to the games' rules. 
+ * Validator is in charge of deciding if a move or a series of moves is valid according to the games' rules. 
  * 
  * <h2>Goals</h2>
  * <ul>
- * <li>Given a move and a Game state, or a serie of moves, decides if it is Valid or not.</li>
+ * <li>Given a move and a Game state, or a series of moves, decides if it is Valid or not.</li>
  * <li>Storing a command.</li>
  * </ul> 
  * 

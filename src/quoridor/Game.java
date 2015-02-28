@@ -67,7 +67,7 @@ public class Game {
 	LinkedList<Wall> walls = new LinkedList<Wall>();
 	// List of the moves that have been made on the board
 	LinkedList<Move> moves = new LinkedList<Move>();
- 
+
 	/**
 	 * Constructor, creates the players based on names sent by factory.
 	 */
@@ -320,7 +320,9 @@ public class Game {
 
 		display();
 		System.out.println("Make a move " + myTurn().name + ": ");
+		int turns = 0;
 		while (!isOver()) {
+			turns++;
 			Move move;
 			if (myTurn().type().equals("AI")) {
 				AI ai = new AI(this);
@@ -345,7 +347,7 @@ public class Game {
 
 		}
 
-		System.out.println("GG. Winner is " + winner().name + ".");
+		System.out.println("GG. Winner is " + winner().name + " after " + turns + ".");
 	}
 
 	/**
@@ -877,6 +879,84 @@ public class Game {
 			tempPawn = new Point(current.coord().x(), current.coord().y());
 			tempPlayer.pawn = tempPawn;
 			if (tempPlayer.goalDistance() == 0) {
+				foundGoal = true;
+			} else {
+				// expand current
+				next = new WeightedMove(current.coord().x() + 1, current
+						.coord().y(), MoveType.PAWN, gcost, player, current);
+				if (isNotBlocked(next, tempPlayer) && isInBoard(next)
+						&& !(open.contains(next) || closed.contains(next)))
+					open.offer(next);
+				next = new WeightedMove(current.coord().x() - 1, current
+						.coord().y(), MoveType.PAWN, gcost, player, current);
+				if (isNotBlocked(next, tempPlayer) && isInBoard(next)
+						&& !(open.contains(next) || closed.contains(next)))
+					open.offer(next);
+				next = new WeightedMove(current.coord().x(), current.coord()
+						.y() - 1, MoveType.PAWN, gcost, player, current);
+				if (isNotBlocked(next, tempPlayer) && isInBoard(next)
+						&& !(open.contains(next) || closed.contains(next)))
+					open.offer(next);
+				next = new WeightedMove(current.coord().x(), current.coord()
+						.y() + 1, MoveType.PAWN, gcost, player, current);
+				if (isNotBlocked(next, tempPlayer) && isInBoard(next)
+						&& !(open.contains(next) || closed.contains(next)))
+					open.offer(next);
+			}
+			closed.add(current);
+		}
+
+		LinkedList<Move> result = null;
+
+		if (foundGoal) {
+			result = new LinkedList<Move>();
+			result.add(current);
+			while (current.parent() != null) {
+				current = current.parent();
+				result.addFirst(current);
+			}
+		}
+
+		return result;
+
+	}
+	
+	/**
+	 * Computes the shortest path for a player to reach the goal as a list of
+	 * moves.
+	 * Blantant copy of the original method for path to goal
+	 * @param player
+	 *            for which shortest path to win is computed
+	 * @return shortest list of moves to win
+	 */
+	public LinkedList<Move> movesToNextColumn(Player player) {
+		Comparator<WeightedMove> comparator = new WeightedMoveComparator();
+		PriorityQueue<WeightedMove> open = new PriorityQueue<WeightedMove>(81,
+				comparator);
+		LinkedList<WeightedMove> closed = new LinkedList<WeightedMove>();
+
+		WeightedMove current = null;
+		WeightedMove next = null;
+
+		Player tempPlayer = new Human(null);
+		tempPlayer.setGoal(player.goal);
+		Point tempPawn;
+		
+		//int goal = tempPlayer.goalDistance() - 1;
+		int goal = player.goalDistance() - 1;
+
+		int gcost = 0;
+		current = new WeightedMove(player.pawn().x(), player.pawn().y(),
+				MoveType.PAWN, gcost, player, null);
+		open.add(current);
+		boolean foundGoal = false;
+		while (open.peek() != null && !foundGoal) {
+			current = open.poll();
+			gcost = current.gcost() + 1;
+
+			tempPawn = new Point(current.coord().x(), current.coord().y());
+			tempPlayer.pawn = tempPawn;
+			if (tempPlayer.goalDistance() == goal) {
 				foundGoal = true;
 			} else {
 				// expand current

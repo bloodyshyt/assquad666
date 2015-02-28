@@ -1,4 +1,4 @@
-﻿package quoridor;
+package quoridor;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -27,17 +27,19 @@ import features.WallsDifference;
  * 
  */
 
-public class AI {
+public class BaseAI {
 
 	Game game;
 	Player player;
 
-	MaxPlayerShortestPath maxPlayerShortestPath = new MaxPlayerShortestPath();
-	MinPlayerShortestPath minPlayerShortestPath = new MinPlayerShortestPath();
-	WallsDifference difference2 = new WallsDifference();
+	static MaxPlayerShortestPath maxPlayerShortestPath = new MaxPlayerShortestPath();
+	static MinPlayerShortestPath minPlayerShortestPath = new MinPlayerShortestPath();
+	static WallsDifference difference2 = new WallsDifference();
 	Feature[] features = new Feature[] { null, maxPlayerShortestPath,
 			minPlayerShortestPath, difference2 };
-	float[] weights = new float[] { 0.0f, -1f, 1f, 1f };
+	float[] weights;
+
+	// float[] weights = new float[] { 0.0f, -1f, 1f, 1f };
 
 	/**
 	 * Constructor for AI. It requireds type Game to be passed in.
@@ -45,9 +47,10 @@ public class AI {
 	 * @param game
 	 *            the game AI is required for.
 	 */
-	public AI(Game game) {
+	public BaseAI(Game game, float[] weights) {
 		this.game = game;
 		player = game.myTurn();
+		this.weights = weights;
 	}
 
 	/**
@@ -57,178 +60,7 @@ public class AI {
 	 */
 	public Move createMove() {
 		Move move = null;
-		//
-		// if (game.myTurn().level().equals("random")) {
-		// move = randomMove();
-		// } else if (game.myTurn().level().equals("naive")) {
-		// move = naiveMove();
-		// } else if (game.myTurn().level().equals("pro")) {
-		// move = proMove();
-		// }
 		move = proMove();
-		return move;
-	}
-
-	/**
-	 * Makes a random move out of all the possible moves
-	 * 
-	 * @return a Move
-	 */
-	private Move randomMove() {
-		ArrayList<Move> possibleMoves = findPossibleMoves(game);
-		Random randomGenerator = new Random();
-		Move move = possibleMoves.get(randomGenerator.nextInt(possibleMoves
-				.size()));
-
-		return move;
-	}
-
-	/**
-	 * Makes a naive move based on the current state of the game using a
-	 * heuristic
-	 * 
-	 * @return
-	 */
-	private Move naiveMove() {
-		ArrayList<Move> possibleMoves = findPossibleMoves(game);
-		Move move = null;
-		int myValue = game.shortestPath(game.myTurn()).size();
-		int playerShortestPath = game.shortestPath(
-				game.players().other(game.myTurn())).size();
-
-		int highestValue = (int) Double.NEGATIVE_INFINITY;
-		int index = 0;
-		Random random = new Random();
-		// Find best move
-
-		if (myValue >= playerShortestPath - 1 && game.myTurn().wallsLeft() != 0
-				&& game.moves.size() > random.nextInt(4)) {
-			for (int i = 0; i < possibleMoves.size(); i++) {
-				int value = 0;
-				if (possibleMoves.get(i).direction() == MoveType.HORIZONTAL
-						|| possibleMoves.get(i).direction() == MoveType.VERTICAL) {
-
-					Game tempGame = createTempGame(game.moves);
-
-					// add wall
-					tempGame.move(possibleMoves.get(i), tempGame.myTurn);
-
-					int tempShortest = tempGame.shortestPath(tempGame.myTurn)
-							.size();
-					int myTempShortest = tempGame.shortestPath(
-							tempGame.players.other(tempGame.myTurn)).size();
-
-					// calculate value of each move
-					value = (tempGame.shortestPath(tempGame.myTurn).size())
-							- (myTempShortest - myValue)
-							- wallDistance(possibleMoves.get(i), game, 0);
-
-					if (playerShortestPath == tempShortest) {
-						if (myValue == myTempShortest) {
-							value = value * 1 / 2 - 20;
-						}
-					}
-
-					if (isAdjacent(possibleMoves.get(i))) {
-						value++;
-					}
-
-					if (value > highestValue) {
-						highestValue = value;
-						index = i;
-					}
-				}
-				move = possibleMoves.get(index);
-			}
-		} else {
-			move = game.shortestPath(game.myTurn()).get(1);
-			if (!game.isValid(move, game.myTurn())) {
-				// move = game.shortestPath(game.myTurn()).get(2);
-				// if (!game.isValid(move, game.myTurn())) {
-				// find best move by comparing shortest path
-				Game tempGame = createTempGame(game.moves);
-				Game tempGameTwo = createTempGame(game.moves);
-
-				Point p = game.myTurn().pawn();
-				Move tempMove = new Move(p.x() + 1, p.y(), MoveType.PAWN);
-				Move tempMoveTwo = new Move(p.x() - 1, p.y(), MoveType.PAWN);
-				Move tempMoveThree = new Move(p.x(), p.y() + 1, MoveType.PAWN);
-				Move tempMoveFour = new Move(p.x(), p.y() - 1, MoveType.PAWN);
-
-				if (tempGame.isValid(tempMove, tempGame.myTurn())) {
-					if (!game.isValid(move, game.myTurn())) {
-						move = tempMove;
-					} else {
-						tempGame.move(tempMove, tempGame.myTurn());
-						tempGameTwo.move(move, tempGameTwo.myTurn());
-						if (tempGame.shortestPath(tempGame.myTurn()).size() < tempGameTwo
-								.shortestPath(tempGameTwo.myTurn()).size())
-							move = tempMove;
-						tempGame.undo();
-						tempGameTwo.undo();
-					}
-				} else if (tempGame.isValid(tempMoveTwo, tempGame.myTurn())) {
-					if (!game.isValid(move, game.myTurn())) {
-						move = tempMoveTwo;
-					} else {
-						tempGame.move(tempMoveTwo, tempGame.myTurn());
-						tempGameTwo.move(move, tempGameTwo.myTurn());
-						if (tempGame.shortestPath(tempGame.myTurn()).size() < tempGameTwo
-								.shortestPath(tempGameTwo.myTurn()).size())
-							move = tempMoveTwo;
-						tempGame.undo();
-						tempGameTwo.undo();
-					}
-				} else if (tempGame.isValid(tempMoveThree, tempGame.myTurn())) {
-					if (!game.isValid(move, game.myTurn())) {
-						move = tempMoveThree;
-					} else {
-						tempGame.move(tempMoveThree, tempGame.myTurn());
-						tempGameTwo.move(move, tempGameTwo.myTurn());
-						if (tempGame.shortestPath(tempGame.myTurn()).size() < tempGameTwo
-								.shortestPath(tempGameTwo.myTurn()).size())
-							move = tempMoveThree;
-						tempGame.undo();
-						tempGameTwo.undo();
-					}
-				} else {
-					if (!game.isValid(move, game.myTurn())) {
-						move = tempMoveFour;
-					} else {
-						tempGame.move(tempMoveFour, tempGame.myTurn());
-						tempGameTwo.move(move, tempGameTwo.myTurn());
-						if (tempGame.shortestPath(tempGame.myTurn()).size() < tempGameTwo
-								.shortestPath(tempGameTwo.myTurn()).size())
-							move = tempMoveFour;
-						tempGame.undo();
-						tempGameTwo.undo();
-					}
-				}
-
-				// if (tempGame.isValid(tempMove, tempGame.myTurn())) {
-				// move = tempMove;
-				// if (tempGame.isValid(tempMoveTwo, tempGame.myTurn())) {
-				// tempGame.move(tempMove, game.myTurn());
-				// tempGameTwo.move(tempMoveTwo, game.myTurn());
-				//
-				// if
-				// (tempGame.shortestPath(tempGame.players().other(tempGame.myTurn())).size()
-				// <
-				// tempGameTwo.shortestPath(tempGameTwo.players().other(tempGameTwo.myTurn())).size())
-				// {
-				// move = tempMove;
-				// } else {
-				// move = tempMoveTwo;
-				// }
-				// }
-				// } else if (tempGame.isValid(tempMoveTwo, tempGame.myTurn()))
-				// {
-				// move = tempMoveTwo;
-				// }
-				// }
-			}
-		}
-
 		return move;
 	}
 
@@ -343,67 +175,21 @@ public class AI {
 	 * 
 	 * @param moves
 	 *            a list of all the moves played so far
-	 * @return an int, the heuristic value of a move
+	 * @return a float, the heuristic value of a move
 	 */
 	private float heuristic(LinkedList<Move> moves) {
-		int value = 0;
 
 		Game tempGame = createTempGame(moves);
-
-		if (game.myTurn().level().equals("random")) {
-			MaxPlayerShortestPath f1 = new MaxPlayerShortestPath();
-			MinPlayerShortestPath f2 = new MinPlayerShortestPath();
-			WallsDifference f3 = new WallsDifference();
-			int[] f = new int[] { 5, 6, 7 };
-			if (player.equals(game.players()._1())) {
-				// max is player 1
-				return (float) (-f1.evaluate(tempGame, tempGame.players()._1)
-						+ f2.evaluate(tempGame, tempGame.players()._1)
-						+ f3.evaluate(tempGame, tempGame.players()._1) + new Random()
-						.nextFloat() * 0.1);
-			} else {
-				return (float) (-f1.evaluate(tempGame, tempGame.players()._2)
-						+ f2.evaluate(tempGame, tempGame.players()._2)
-						+ f3.evaluate(tempGame, tempGame.players()._2) + new Random()
-						.nextFloat() * 0.1);
-			}
-		} else if (game.myTurn().level().equals("naive")) {
-			int[] f = new int[] { 1, 2, 3 };
-			if (player.equals(game.players()._1())) {
-				// max is player 1
-				return (float) (evaluate(tempGame, tempGame.players()._1, f) + new Random()
-						.nextFloat() * 0.1);
-			} else {
-				return (float) (evaluate(tempGame, tempGame.players()._2, f) + new Random()
-						.nextFloat() * 0.1);
-			}
-
-		} else if (game.myTurn().level().equals("pro")) {
-			if (player.equals(game.players()._1())) {
-				// max is player 1
-				value = 1
-						* (tempGame.shortestPath(tempGame.players()._2())
-								.size())
-						- (tempGame.shortestPath(tempGame.players()._1())
-								.size())
-						+ 1
-						* (tempGame.players()._1().wallsLeft() - tempGame
-								.players()._2().wallsLeft());
-			} else {
-				// max is player 2
-				value = 1
-						* (tempGame.shortestPath(tempGame.players()._1())
-								.size())
-						- (tempGame.shortestPath(tempGame.players()._2())
-								.size())
-						+ 1
-						* (tempGame.players()._2().wallsLeft() - tempGame
-								.players()._1().wallsLeft());
-			}
-
+		int[] f = new int[] { 1, 2, 3 };
+		if (player.equals(game.players()._1())) {
+			// max is player 1
+			return (float) (evaluate(tempGame, tempGame.players()._1, f) + new Random()
+					.nextFloat() * 0.1);
+		} else {
+			return (float) (evaluate(tempGame, tempGame.players()._2, f) + new Random()
+					.nextFloat() * 0.1);
 		}
 
-		return value;
 	}
 
 	/**
